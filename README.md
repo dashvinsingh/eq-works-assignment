@@ -5,7 +5,7 @@ Work Sample for Product Aspect, Node.js Variant
 
 ### Setup and Run
 
-The following are the recommended options, but you're free to use any means to get started.
+The following are the recommended options, but you're free to use any mea`ns to get started.
 
 #### Remote Option: Glitch.com
 

@@ -6,11 +6,22 @@ const app = express()
 // https://www.postgresql.org/docs/9.6/static/libpq-envars.html
 const pool = new pg.Pool()
 
+//Importe the limiter middleware that checks if a request should go through to the DB.
+var limiterMiddleWare = require("./limiter_middleware.js");
+
+//Create the RateLimiter object (i.e. memory story)
+//First parameter is maxRequest, second parameter is timeLimiter in ms.
+const RateLimiter = require("./limiter.js").RateLimiter;
+var limiter = new RateLimiter(5, 1000 * 60);
+
 const queryHandler = (req, res, next) => {
   pool.query(req.sqlQuery).then((r) => {
     return res.json(r.rows || [])
   }).catch(next)
 }
+
+//Adds the middleware.
+app.use(limiterMiddleWare(limiter))
 
 app.get('/', (req, res) => {
   res.send('Welcome to EQ Works 😎')
