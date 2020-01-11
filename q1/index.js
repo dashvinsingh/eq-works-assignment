@@ -6,6 +6,7 @@ const app = express()
 // https://www.postgresql.org/docs/9.6/static/libpq-envars.html
 const pool = new pg.Pool()
 
+
 //Importe the limiter middleware that checks if a request should go through to the DB.
 var limiterMiddleWare = require("./limiter_middleware.js");
 
@@ -20,8 +21,11 @@ const queryHandler = (req, res, next) => {
   }).catch(next)
 }
 
+//serve the static
+app.use('/charts', express.static('public'))
 //Adds the middleware.
 app.use(limiterMiddleWare(limiter))
+
 
 app.get('/', (req, res) => {
   res.send('Welcome to EQ Works 😎')
