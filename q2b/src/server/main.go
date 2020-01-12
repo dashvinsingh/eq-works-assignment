@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"sync"
 	"time"
+	"strings"
 )
 
 type counters struct {
@@ -15,7 +16,22 @@ type counters struct {
 	click int
 }
 
+//This struct contains number of requests, time of first request, 
+//and whether ip is active.
+type rateLimitData struct {
+	requestCount int
+	requestTime time.Time
+	active bool
+}
+
 var (
+
+	//Rate Limit (statHandler) Variables
+	rateLimiterMap = make(map[string]*rateLimitData)
+	maxRequest = 5 			//5 requests allowed every 1 min
+	timeLimit time.Duration = 1000 * 60; 	//1 minute in ms
+
+	//viewHandler Variables
 	m = make(map[string]*counters)
 	content = []string{"sports", "entertainment", "business", "education"}
 )
@@ -71,14 +87,38 @@ func processClick(data string) error {
 }
 
 func statsHandler(w http.ResponseWriter, r *http.Request) {
-	if !isAllowed() {
+	ipAddress := strings.Split(r.RemoteAddr,":")[0]
+	//isAllowed modified to handle rate limiting logic
+	if !isAllowed(ipAddress) {
 		w.WriteHeader(429)
 		return
 	}
 }
 
-func isAllowed() bool {
-	return true
+func isAllowed(ipAddress string) bool {
+	//If ipAddress not already in the hash map, initiate it with
+	//ipAddress as the key and rateLimitData struct as its value
+	_, ok := rateLimiterMap[ipAddress]; if ! ok {
+		rateLimiterMap[ipAddress] = &rateLimitData{0, time.Now(), true}
+	}
+
+	startTime := rateLimiterMap[ipAddress].requestTime
+	currentCount := rateLimiterMap[ipAddress].requestCount
+
+	//If time now is in range of [startTime, startTime + timeLimit] and we haven't exhaused request limit
+	if (time.Now().After(startTime) && time.Now().Before(startTime.Add(time.Millisecond * timeLimit))) && currentCount < maxRequest {
+		rateLimiterMap[ipAddress].active = true
+		rateLimiterMap[ipAddress].requestCount++
+		return true
+	} else {
+		//If request limit exhaused, mark ip as inactive and set new time (i.e. time when this user can resume).
+		if (rateLimiterMap[ipAddress].active == true) {
+			rateLimiterMap[ipAddress].requestTime = time.Now().Add(time.Millisecond * timeLimit) 
+			rateLimiterMap[ipAddress].active = false
+			rateLimiterMap[ipAddress].requestCount = 0
+		}
+	}
+	return false
 }
 
 func uploadCounters() error {
