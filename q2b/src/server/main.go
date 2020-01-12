@@ -122,6 +122,11 @@ func isAllowed(ipAddress string) bool {
 }
 
 func uploadCounters() error {
+	for true {
+		processRequest(nil)
+		// fmt.Println("Processing Request.")
+		time.Sleep(time.Second * 5)
+	}
 	return nil
 }
 
@@ -130,5 +135,11 @@ func main() {
 	http.HandleFunc("/view/", viewHandler)
 	http.HandleFunc("/stats/", statsHandler)
 
+	//Creates a new thread uploading data (i.e. processing request) every 5 seconds.
+	go uploadCounters()
+
+	//Printing parameters of rate limiter.
+	fmt.Printf("Rate Limiter Config\nMax Requests: %d\nTime Limit: %s", maxRequest, timeLimit)
+	
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
