@@ -13,7 +13,8 @@ var limiterMiddleWare = require("./limiter_middleware.js");
 //Create the RateLimiter object (i.e. memory story)
 //First parameter is maxRequest, second parameter is timeLimiter in ms.
 const RateLimiter = require("./limiter.js").RateLimiter;
-var limiter = new RateLimiter(5, 1000 * 60);
+const timeLimit = process.env.TIMELIMIT || 1000 * 60;
+var limiter = new RateLimiter(5, timeLimit);
 
 const queryHandler = (req, res, next) => {
   pool.query(req.sqlQuery).then((r) => {
