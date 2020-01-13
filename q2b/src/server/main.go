@@ -123,8 +123,14 @@ func isAllowed(ipAddress string) bool {
 
 func uploadCounters() error {
 	for true {
+
+		// I am assuming that "upload to mock service" as written in the handout means 
+		// to make a mock request to upload the data. In that case we would use http.post(url, counters)
+		// to upload the counters object. Since there is no endpoint, i'm calling the processRequest function.
 		processRequest(nil)
 		// fmt.Println("Processing Request.")
+
+		//Sleep for 5 seconds before jumping back to the beginning of the loop iteration.
 		time.Sleep(time.Second * 5)
 	}
 	return nil

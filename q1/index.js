@@ -23,8 +23,6 @@ const queryHandler = (req, res, next) => {
   }).catch(next)
 }
 
-//serve the static
-app.use('/charts', express.static('public'))
 //Adds the middleware.
 app.use(limiterMiddleWare(limiter))
 
