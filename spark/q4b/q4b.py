@@ -93,74 +93,41 @@ class TopSort():
         self.graph = Graph(self.tasks, self.relations)
 
 
-    ## Attempted backwards but does not catch prereq's among the same level of parents
+    ## Traverse Backward to each parent and so fourth until we reach "start"
     def get_ordering_from_end(self, start, end):
-        ordering = OrderedDict()
-        Q = deque([self.graph.get_node(end)])
-        found = False
-        while len(Q) > 0:
-            node = Q.popleft()
 
-            if (node.get_value() == start):
-                found = True
-            else:
-                ordering[node.get_value()] = None
-            if (not found):
-                for parent in node.get_parents():
-                    if (not parent.is_parent(start) and parent.get_visited() == False):
-                        Q.append(parent)
-            node.set_visited(True)
-        ordering[start] = None
-        return list(ordering.keys())[::-1]
-
-
-
-    def get_ordering(self, start, end):
-        #Using this to avoid duplicates and preserve ordering
-        ordering = OrderedDict() 
-        Q = deque([self.graph.get_node(start)])
-
-        while len(Q) != 0:
-            node = Q.popleft()
-            
-            if (node.get_value() != start):
-                #this conditional is to satisfy:
-                ## "if a task is not a prerequisite task of goal, or its task is a 
-                # prerequisite task for starting tasks (already been executed), 
-                # then it shouldn't be included in the path."
-
-                for parent in node.get_parents():
-                    if parent.get_visited() == False:
-                        parent.set_visited(True)
-                        ordering[parent.get_value()] = None
-                
-            ordering[node.get_value()] = None
-
-            for child in node.get_children():
-                if child.get_visited() == False:
-                    Q.append(child)
-            
-            node.set_visited(True)
-            if (node.get_value() == end):
-                break
+        lst = []
+        # Purpose of this is to get all the dependecies of the start node
+        self._get_ordering_from_end(start=start, end=None, visited=lst)
+        # The final element of the list `lst` is `start`, we want to keep that and remove all it's dependencies (see line 121)
+        final_element = len(lst) - 1
+        # Gets all the dependencies of the end node, which must include the start
+        self._get_ordering_from_end(start=end, end=start, visited=lst)
+        return lst[final_element:]
+    
+    def _get_ordering_from_end(self, start, end, visited=[]):
+        """
+        Idea: Visit parent before you visit the current node. That is all the dependencies will be "processed" before
+        the current package is "processed".
+        """
+        if start in visited:
+            return
         
-
-        ## Weed out nodes that aren't prerequisites by traversing backwards
-        Q = deque([self.graph.get_node(end)])
-        while len(Q) > 0:
-            node = Q.popleft()
-            ordering[node.get_value()] = True
-            for parent in node.get_parents():
-                # Don't add parents of the starting node
-                if (not parent.is_parent(start)):
-                    Q.append(parent)
+        if start is not end:
+            for parent in self.graph.get_node(start).get_parents():
+                self._get_ordering_from_end(start=parent.get_value(), end=end, visited=visited)
         
-        return [key for key, value in ordering.items() if value == True]
+        visited.append(start)
+
+
 
 if __name__ == "__main__":
 
-    problems = [("task_ids.txt", "relations.txt", "73", "36"), ("small_nodes.txt", "small_edges.txt", "a", "f")]
+    problems = [("task_ids.txt", "relations.txt", "73", "36"), 
+                ("task_ids.txt", "relations.txt", "73", "37"),
+                ("small_nodes.txt", "small_edges.txt", "a", "f"),
+                ]
     for node_file, edge_file, start, end in problems:
         top = TopSort(node_file, edge_file)
-        print(top.get_ordering(start, end))
+        print("Start: {}, end: {}, ordering: {}".format(start, end, top.get_ordering_from_end(start, end)))
     
