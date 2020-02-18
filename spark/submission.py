@@ -35,7 +35,8 @@ add = lambda x,y: x+y
 ID, TIMEST, COUNTRY, PROVICE, CITY, LAT, LONG = 0,1,2,3,4,5,6
 POI = 7 #this is used after matching POI in part 2
 
-#################PART 1####################
+print("All distances are in KMs.")
+################# PART 1 ####################
 
 duplicateGeoAndTime =  split.map(lambda x: ((x[TIMEST], x[LAT], x[LONG]),1))\
                     .reduceByKey(add)\
@@ -44,7 +45,7 @@ duplicateGeoAndTime =  split.map(lambda x: ((x[TIMEST], x[LAT], x[LONG]),1))\
 
 cleaned = split.filter(lambda x: (x[TIMEST], x[LAT], x[LONG]) not in duplicateGeoAndTime)
 
-##Part 2 Labeling
+################# PART 2 ####################
 def distance(poi, currentLocation, squared=True):
     #Input is a tuple (latitude, longitude)
     poi_lat, poi_long = float(poi[0]), float(poi[1])
@@ -85,6 +86,8 @@ print("\n====Part 2 Start====")
 print("\nPart 2 - sample row after finding POI with min distance")
 print(with_poi.takeSample(withReplacement=True, num=1))
 
+
+################# PART 3 ####################
 print("\n====Part 3 Start====")
 #Part 3 a
 # mean = sum(X_i's)/count(X_i's)
@@ -126,8 +129,9 @@ print("Density by POI: ", str(density.collect()))
 ##Comments
 # There are some outliers with non negative longitude, i.e. a point not in north ameria, leading to large radius.
 
-print("\n====Part 4 Start====")
 
+################# PART 4 (a) ####################
+print("\n====Part 4 Start====")
 #Part 4 a
 print("\nPart 4a - Model and Rating")
 ##
@@ -135,16 +139,18 @@ print("\nPart 4a - Model and Rating")
 ##
 normalized_radius = radius.map(lambda x: (x[0], x[1][1])).join(mean).join(sd).map(lambda x: (x[0], (x[1][0][0]-x[1][0][1]) / x[1][1]))
 print("Normalized radius: ", normalized_radius.collect())
+
 normalized_area = normalized_radius.map(lambda x: (x[0], math.pi * (x[1])**2))
 print("Normalized area: ", normalized_area.collect())
+
 normalized_density = normalized_area.join(count).map(lambda x: (x[0], x[1][1]/x[1][0]))
 print("Normalized density (request/area): ", normalized_density.collect())
-min_density = min(normalized_density.collect(), key=lambda x:x[1])[1]
-max_density = max(normalized_density.collect(), key=lambda x:x[1])[1]
 
 ##
 # Normalize density between (-10, 10)
-# (20) * (x - min)/(max - min)) - 10
+# (20 * (x - min)/(max - min)) - 10
 ##
+min_density = min(normalized_density.collect(), key=lambda x:x[1])[1]
+max_density = max(normalized_density.collect(), key=lambda x:x[1])[1]
 rating = normalized_density.map(lambda x: (x[0], (20*(x[1] - min_density)/(max_density - min_density)) - 10))
 print("POI Ratings: ", rating.collect())
