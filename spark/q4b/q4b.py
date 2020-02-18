@@ -94,15 +94,17 @@ class TopSort():
 
 
     ## Traverse Backward to each parent and so fourth until we reach "start"
-    def get_ordering_from_end(self, start, end):
+    def get_ordering_from_end(self, start_list, end):
 
         lst = []
         # Purpose of this is to get all the dependecies of the start node
-        self._get_ordering_from_end(start=start, end=None, visited=lst)
+        for start in start_list:
+            self._get_ordering_from_end(start=start, end=None, visited=lst)
         # The final element of the list `lst` is `start`, we want to keep that and remove all it's dependencies (see line 121)
         final_element = len(lst) - 1
         # Gets all the dependencies of the end node, which must include the start
-        self._get_ordering_from_end(start=end, end=start, visited=lst)
+        for start in start_list:
+            self._get_ordering_from_end(start=end, end=start, visited=lst)
         return lst[final_element:]
     
     def _get_ordering_from_end(self, start, end, visited=[]):
@@ -123,9 +125,11 @@ class TopSort():
 
 if __name__ == "__main__":
 
-    problems = [("task_ids.txt", "relations.txt", "73", "36"), 
-                ("task_ids.txt", "relations.txt", "73", "37"),
-                ("small_nodes.txt", "small_edges.txt", "a", "f"),
+    problems = [("task_ids.txt", "relations.txt", ["73"], "36"), 
+                ("task_ids.txt", "relations.txt", ["102", "73"], "36"),
+                ("task_ids.txt", "relations.txt", ["73"], "37"),
+                ("small_nodes.txt", "small_edges.txt", ["a"], "f"),
+                ("small_nodes.txt", "small_edges.txt", ["a", "c"], "f"),
                 ]
     for node_file, edge_file, start, end in problems:
         top = TopSort(node_file, edge_file)
