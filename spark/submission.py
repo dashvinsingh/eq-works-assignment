@@ -23,8 +23,7 @@ splitPOI = data_poi.filter(lambda x: x!= firstPOI)\
 add = lambda x,y: x+y
 
 #Define constants for each index
-
-####### Data Format
+# Data Format
 #(0) _ID='4516516',  
 #(1) TimeSt='2017-06-21 00:00:00.143', 
 #(2) Country='CA', 
@@ -36,18 +35,7 @@ add = lambda x,y: x+y
 ID, TIMEST, COUNTRY, PROVICE, CITY, LAT, LONG = 0,1,2,3,4,5,6
 POI = 7 #this is used after matching POI in part 2
 
-##Part 1 Cleanup
-
-####We don't want to filter out (time) and (geo info) but rather (time and geo info)
-# duplicateTimeStamps =  split.map(lambda x: (x[1],1))\
-#                             .reduceByKey(lambda x,y: x+y)\
-#                             .filter(lambda x: x[1] > 1)\
-#                             .map(lambda x: x[0]).collect()
-
-# duplicateGeoInfo =  split.map(lambda x: ((x[5], x[6]),1))\
-#                     .reduceByKey(lambda x,y: x+y)\
-#                     .filter(lambda x: x[1] > 1)\
-#                     .map(lambda x: x[0]).collect()
+#################PART 1####################
 
 duplicateGeoAndTime =  split.map(lambda x: ((x[TIMEST], x[LAT], x[LONG]),1))\
                     .reduceByKey(add)\
@@ -79,9 +67,9 @@ def distance(poi, currentLocation, squared=True):
         #6371 is earth's average radius in Meters
         return 6371 * c
 
-#Adds a new tuple to each row (POI#, distance)
 pois = splitPOI.collect()
 
+#Adds a new tuple to each row (POI#, distance)
 #Attaches minimum distance POI label to each row
 with_poi = cleaned\
             .map(lambda x: \
@@ -89,14 +77,15 @@ with_poi = cleaned\
                     min(\
                         [\
                         (distance((lat, long), (x[LAT], x[LONG]), squared=False), poi) for poi, lat, long, in pois\
-                        ])[::-1]  #[0] add this if we don't want the distance
+                        ])[::-1]
                     ]\
             )
 
-print("Part 2 - sample row after finding POI with min distance")
+print("\n====Part 2 Start====")
+print("\nPart 2 - sample row after finding POI with min distance")
 print(with_poi.takeSample(withReplacement=True, num=1))
 
-print("====Part 3 Start====")
+print("\n====Part 3 Start====")
 #Part 3 a
 # mean = sum(X_i's)/count(X_i's)
 poi_distance = with_poi.map(lambda x: x[POI])
@@ -110,21 +99,22 @@ diff_sum_mean_squared = sum_mean\
                         .map(lambda x: (x[0], (x[1][0] - x[1][1])**2))\
                         .reduceByKey(add)
 
+# divide sum(X_i's-mu)**2 by (n-1) and take the sqrt()
 sd = diff_sum_mean_squared\
                         .join(count)\
                         .map(lambda x: (x[0], (x[1][0]/(x[1][1]-1))**(1/2)))
 
-print("Part 3a - mean and sd of POI distances")
+print("\nPart 3a - mean and sd of POI distances")
 print("Count: ", count.collect())
 print("Mean: ", mean.collect())
 print("SD: ", sd.collect())
 
 #Part 3 b
-print("Part 3b")
-radius = with_poi
+print("\nPart 3b - radius: location that is furthest from the tagged POI.")
+radius = with_poi\
         .map(lambda x: (x[POI][0], ((x[ID], x[COUNTRY], x[PROVICE], x[CITY], x[LAT], x[LONG]), x[POI][1])))\
         .reduceByKey(lambda x, y: x if(x[1]>y[1]) else y)
-print("Radius/i.e. max distance from POI: ", radius.collect())
+print("Radius: ", radius.collect())
 
 
 area = radius.map(lambda x: (x[0], math.pi * (x[1][1])**2))
@@ -135,3 +125,26 @@ print("Density by POI: ", str(density.collect()))
 
 ##Comments
 # There are some outliers with non negative longitude, i.e. a point not in north ameria, leading to large radius.
+
+print("\n====Part 4 Start====")
+
+#Part 4 a
+print("\nPart 4a - Model and Rating")
+##
+# standardized_radius = (radius - mean(poi distances)) / sd(poi distances)
+##
+normalized_radius = radius.map(lambda x: (x[0], x[1][1])).join(mean).join(sd).map(lambda x: (x[0], (x[1][0][0]-x[1][0][1]) / x[1][1]))
+print("Normalized radius: ", normalized_radius.collect())
+normalized_area = normalized_radius.map(lambda x: (x[0], math.pi * (x[1])**2))
+print("Normalized area: ", normalized_area.collect())
+normalized_density = normalized_area.join(count).map(lambda x: (x[0], x[1][1]/x[1][0]))
+print("Normalized density (request/area): ", normalized_density.collect())
+min_density = min(normalized_density.collect(), key=lambda x:x[1])[1]
+max_density = max(normalized_density.collect(), key=lambda x:x[1])[1]
+
+##
+# Normalize density between (-10, 10)
+# (20) * (x - min)/(max - min)) - 10
+##
+rating = normalized_density.map(lambda x: (x[0], (20*(x[1] - min_density)/(max_density - min_density)) - 10))
+print("POI Ratings: ", rating.collect())
