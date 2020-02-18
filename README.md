@@ -1,5 +1,7 @@
 ### Dashvin Singh Submission
 
+**UPDATE: Added Data Role in spark/ directory.**
+
 #### Question 1
 Source code for question 1 can be found in the q1/ folder in this repository. It is currently deployed onto a heroku endpoint at: http://q1-eqworks.herokuapp.com/.
 
