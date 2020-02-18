@@ -22,7 +22,7 @@ splitPOI = data_poi.filter(lambda x: x!= firstPOI)\
 #Lambda Functions
 add = lambda x,y: x+y
 
-#Define constants for each index
+###### Define constants for each index
 # Data Format
 #(0) _ID='4516516',  
 #(1) TimeSt='2017-06-21 00:00:00.143', 
@@ -31,11 +31,11 @@ add = lambda x,y: x+y
 #(4) City='Waterloo', 
 #(5) Latitude='43.49347', 
 #(6) Longitude='-80.49123'
-######
 ID, TIMEST, COUNTRY, PROVICE, CITY, LAT, LONG = 0,1,2,3,4,5,6
 POI = 7 #this is used after matching POI in part 2
+######
 
-print("All distances are in KMs.")
+print("Note: All distances are in KMs.\n")
 ################# PART 1 ####################
 
 duplicateGeoAndTime =  split.map(lambda x: ((x[TIMEST], x[LAT], x[LONG]),1))\
@@ -86,6 +86,10 @@ print("\n====Part 2 Start====")
 print("\nPart 2 - sample row after finding POI with min distance")
 print(with_poi.takeSample(withReplacement=True, num=1))
 
+
+##NOTE:
+# At this point, each data "row" looks like
+#(_ID, TimeSt, Country, Province, City, Latitude, Longitude, (POI#, distance to POI))
 
 ################# PART 3 ####################
 print("\n====Part 3 Start====")
